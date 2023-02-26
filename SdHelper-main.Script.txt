@@ -42,8 +42,8 @@ Real InvLerp(Real a, Real b, Real v) {
 
 Vec3 GetColor(Real idx) {
     if (idx <= 0.) return <0., 1., 0.>;
-    if (idx == 1.) return <0., 0., 1.>;
-    if (idx == 2.) return <1., 0., 0.>;
+    if (idx == 1.) return <0.4, 0.4, 1.>;
+    if (idx == 2.) return <1., 0.4, 0.4>;
     return <1., 1., 1.>;
 }
 
