@@ -109,6 +109,7 @@ Real GetSpeedSlideScorePct(Real SideSpeed) {
 
 
 Void RunUpdateSDs() {
+    GetPlayer();
     // ThePlayer.Position;
     // ThePlayer.AimYaw;
     // ThePlayer.AimPitch;
