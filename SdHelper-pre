@@ -1,6 +1,6 @@
 <manialink name="SdHelper" version="3">
 
 <label id="sdhelper-label" pos="-155 85" hidden="false" z-index="3" textsize="5" halign="left" textcolor="FFF" text="$sSd Helper"/>
-<label id="sd-pct-rating" pos="0 -55" hidden="false" z-index="4" textsize="5" halign="center" textcolor="FFF" text="$sSd Quality"/>
+<label id="sd-pct-rating" pos="-50 -55" hidden="false" z-index="4" textsize="5" halign="center" textcolor="FFF" text="$sSd Quality"/>
 
 <script><!--
