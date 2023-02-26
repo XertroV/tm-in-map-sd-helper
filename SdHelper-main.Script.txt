@@ -44,7 +44,7 @@ Vec3 GetColor(Real idx) {
     if (idx <= 0.) return <0., 0., 1.>;
     if (idx == 1.) return <0., 1., 0.>;
     if (idx == 2.) return <1., 0., 0.>;
-    return <0., 0., 0.>;
+    return <1., 1., 1.>;
 }
 
 
@@ -133,7 +133,7 @@ Void RunUpdateSDs() {
     declare SideSpeed = ML::Abs(sped * ML::Sin(SlipAngle));
     declare SlidePct = GetSpeedSlideScorePct(SideSpeed);
     declare IndicatorColor = GetSlideMsgColor(SideSpeed);
-    declare ColorTxt = TL::ColorToText(IndicatorColor);
+    declare ColorTxt = "$s$" ^ TL::ColorToText(IndicatorColor);
 
     // need to get velocity vector and orientation vector
 
@@ -141,11 +141,11 @@ Void RunUpdateSDs() {
     if (SADegrees == 0) {
         MainLabel.Value = "No Slide";
     } else {
-        MainLabel.Value = "$" ^ ColorTxt ^ SlidePct;
+        MainLabel.Value = ColorTxt ^ SlidePct;
     }
 
     MainLabel.Value = MainLabel.Value ^ "\n" ^ SideSpeed;
-    IndicatorLabel.Value = "$" ^ ColorTxt ^ TL::FormatReal(SlidePct * 10., 1, True, False);
+    IndicatorLabel.Value = ColorTxt ^ TL::FormatReal(SlidePct * 10., 1, True, False);
 }
 
 
