@@ -1,0 +1,175 @@
+#Const C_PageUID "SdHelper"
+#Include "MathLib" as ML
+#Include "TextLib" as TL
+
+// logging function, should be "MLHook_LogMe_" + PageUID
+Void MLHookLog(Text msg) {
+    SendCustomEvent("MLHook_LogMe_" ^ C_PageUID, [msg]);
+}
+
+
+declare Vec2[] TarmacFsArr;
+
+
+declare CSmPlayer ThePlayer;
+
+Void GetPlayer() {
+    foreach (Player in Players) {
+        if (Player.User.Name == LocalUser.Name) {
+            ThePlayer <=> Player;
+            MLHookLog("Found Player: " ^ Player.User.Name);
+            break;
+        }
+    }
+}
+
+declare CMlLabel MainLabel;
+declare CMlLabel IndicatorLabel;
+
+Void EnsureMainLabel() {
+    if (MainLabel == Null) {
+        MainLabel <=> Page.GetFirstChild("sdhelper-label") as CMlLabel;
+    }
+    if (IndicatorLabel == Null) {
+        IndicatorLabel <=> Page.GetFirstChild("sd-pct-rating") as CMlLabel;
+    }
+}
+
+
+Real InvLerp(Real a, Real b, Real v) {
+    return (v - a) / (b - a);
+}
+
+Vec3 GetColor(Real idx) {
+    if (idx <= 0.) return <0., 0., 1.>;
+    if (idx == 1.) return <0., 1., 0.>;
+    if (idx == 2.) return <1., 0., 0.>;
+    return <0., 0., 0.>;
+}
+
+
+Vec3 GetSlideMsgColor(Real SideSpeed) {
+    declare Vec2 lower = <0., -1.>;
+    declare Vec2 upper = <0., -1.>;
+    declare Vec2 cur = <0., 0.>;
+    foreach (IdealSS in TarmacFsArr) {
+        cur = IdealSS;
+        if (SideSpeed >= cur.X) {
+            lower = cur;
+            continue;
+        }
+        if (SideSpeed < cur.X && upper.Y == -1.) {
+            upper = cur;
+            continue;
+        }
+    }
+    if (lower.Y == -1. || upper.Y == -1.) {
+        return GetColor(3.);
+    }
+    declare Real pos = InvLerp(lower.X, upper.X, SideSpeed);
+    return GetColor(lower.Y) * (1. - pos) + GetColor(upper.Y) * pos;
+}
+
+
+Real GetPct(Real idx) {
+    if (idx <= 0.) return 1.;
+    if (idx == 1.) return .9;
+    if (idx == 2.) return .5;
+    return 0.;
+}
+
+
+Real GetSpeedSlideScorePct(Real SideSpeed) {
+    declare Vec2 lower = <0., -1.>;
+    declare Vec2 upper = <0., -1.>;
+    declare Vec2 cur = <0., 0.>;
+    foreach (IdealSS in TarmacFsArr) {
+        cur = IdealSS;
+        if (SideSpeed >= cur.X) {
+            lower = cur;
+            continue;
+        }
+        if (SideSpeed < cur.X && upper.Y == -1.) {
+            upper = cur;
+            continue;
+        }
+    }
+    if (lower.Y == -1. || upper.Y == -1.) {
+        return GetPct(3.);
+    }
+    declare Real pos = InvLerp(lower.X, upper.X, SideSpeed);
+    return GetPct(lower.Y) * (1. - pos) + GetPct(upper.Y) * pos;
+}
+
+
+Void RunUpdateSDs() {
+    // ThePlayer.Position;
+    // ThePlayer.AimYaw;
+    // ThePlayer.AimPitch;
+    // ThePlayer.AimRoll;
+    // ThePlayer.AimDirection;
+    // ThePlayer.UpDirection;
+    // ThePlayer.LeftDirection;
+    declare vel = ThePlayer.Velocity;
+    declare sped = ThePlayer.Speed;
+
+    declare Real SADegrees;
+    declare Real SlipAngle;
+
+    if (sped < 10.) {
+        SADegrees = 0.;
+    } else {
+        declare PI = ML::PI();
+        SlipAngle = ML::Atan2(vel.X, vel.Z) - ThePlayer.AimYaw;
+        SlipAngle = ML::Mod(SlipAngle + PI, 0., 2. * PI) - PI;
+        SADegrees = ML::RadToDeg(SlipAngle);
+    }
+
+    if (ML::Abs(SADegrees) < 0.65) {
+        SADegrees = 0.;
+        SlipAngle = 0.;
+    }
+
+    declare SideSpeed = ML::Abs(sped * ML::Sin(SlipAngle));
+    declare SlidePct = GetSpeedSlideScorePct(SideSpeed);
+    declare IndicatorColor = GetSlideMsgColor(SideSpeed);
+    declare ColorTxt = TL::ColorToText(IndicatorColor);
+
+    // need to get velocity vector and orientation vector
+
+    EnsureMainLabel();
+    if (SADegrees == 0) {
+        MainLabel.Value = "No Slide";
+    } else {
+        MainLabel.Value = "$" ^ ColorTxt ^ SlidePct;
+    }
+
+    MainLabel.Value = MainLabel.Value ^ "\n" ^ SideSpeed;
+    IndicatorLabel.Value = "$" ^ ColorTxt ^ TL::FormatReal(SlidePct * 10., 1, True, False);
+}
+
+
+
+Void InitValues() {
+    TarmacFsArr = [
+        <.0, 3.0>,
+        <4.5, 2.0>,
+        <5.5, 0.0>,
+        <6.5, 1.0>,
+        <8.9, 2.0>,
+        <12.5, 3.0>
+    ];
+}
+
+
+
+main() {
+    InitValues();
+    GetPlayer();
+    MainLabel <=> Page.GetFirstChild("sdhelper-label") as CMlLabel;
+    RunUpdateSDs();
+    while (True) {
+        yield;
+        RunUpdateSDs();
+    }
+}

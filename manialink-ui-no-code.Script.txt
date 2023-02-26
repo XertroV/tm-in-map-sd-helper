@@ -1,0 +1,28 @@
+#Setting S_ScriptEnvironment "development"
+
+main() {
+  log(This);
+  while (True) {
+  }
+
+declare Text asdf = """
+<script><!--
+main() {
+  while (True) {
+  }
+	log(This);
+	declare TheLabel <=> (Page.GetFirstChild("exampleLabel") as CMlLabel);
+	TheLabel.Value = "Updated";
+  while (True) {
+  }
+}
+--></script>
+<label id="exampleLabel" pos="0 0" z-index="0" text="Example 2"/>
+<label id="exampleLabel2" pos="0 -20" z-index="0" text="Example 3"/>
+<label id="exampleLabel3" pos="-20 20" z-index="0" text="Example 4"/>
+<label id="exampleLabel4" pos="-10 -60" z-index="0" text="Example 5"/>
+<label />
+""";
+  while (True) {
+  }
+}
