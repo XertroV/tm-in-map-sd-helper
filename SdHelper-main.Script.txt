@@ -17,7 +17,7 @@ Void GetPlayer() {
     foreach (Player in Players) {
         if (Player.User.Name == LocalUser.Name) {
             ThePlayer <=> Player;
-            MLHookLog("Found Player: " ^ Player.User.Name);
+            // MLHookLog("Found Player: " ^ Player.User.Name);
             break;
         }
     }
