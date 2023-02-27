@@ -233,7 +233,6 @@ main() {
     yield;
     InitValues();
     GetPlayer();
-    // MainLabel <=> Page.GetFirstChild("sdhelper-label") as CMlLabel;
     while (True) {
         yield;
         RunUpdateSDs();

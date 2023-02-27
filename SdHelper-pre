@@ -4,10 +4,9 @@
 <label id="sd-pct-rating" pos="-35 -55" hidden="false" z-index="4" textsize="5" halign="center" textcolor="FFF" text="$sSd Quality" />
 
 <!--
-    https://raw.githubusercontent.com/XertroV/tm-in-map-sd-helper/master/
-
+    https://xertrov.github.io/tm-in-map-sd-helper/SdHelper.Script.txt
+    https://github.com/XertroV/tm-in-map-sd-helper
     bar: 512x30 -> 42.32 x 2.48
-
     scale: 0.0827
   -->
 <quad id="sd-slider-bar" pos="-35 -45" size="42.32 2.48" halign="center" valign="center" hidden="true" z-index="5" image="https://xertrov.github.io/tm-in-map-sd-helper/bar.png"/>
