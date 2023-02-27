@@ -1,12 +1,25 @@
 <manialink name="SdHelper" version="3">
 
-<label id="sdhelper-label" pos="155 85" hidden="false" z-index="3" textsize="5" halign="right" textcolor="FFF" text="$sSd Helper"/>
-<label id="sd-pct-rating" pos="-35 -55" hidden="false" z-index="4" textsize="5" halign="center" textcolor="FFF" text="$sSd Quality"/>
+<label id="sdhelper-label" pos="155 85" hidden="false" z-index="3" textsize="5" halign="right" textcolor="FFF" text="$sSd Helper" />
+<label id="sd-pct-rating" pos="-35 -55" hidden="false" z-index="4" textsize="5" halign="center" textcolor="FFF" text="$sSd Quality" />
+
+<!--
+    https://raw.githubusercontent.com/XertroV/tm-in-map-sd-helper/master/
+
+    bar: 512x30 -> 42.32 x 2.48
+
+    scale: 0.0827
+  -->
+<quad id="sd-slider-bar" pos="-35 -45" size="42.32 2.48" halign="center" valign="center" hidden="true" z-index="5" image="https://xertrov.github.io/tm-in-map-sd-helper/bar.png"/>
+<quad id="sd-slider-mid" pos="-35 -45" size="2.48 9.92" halign="center" valign="center" hidden="true" z-index="4" image="https://xertrov.github.io/tm-in-map-sd-helper/mid.png"/>
+<quad id="sd-slider-quality" pos="-35 -45" size="4.92 8.27" halign="center" valign="center" hidden="true" z-index="6" image="https://xertrov.github.io/tm-in-map-sd-helper/quality.png"/>
 
 <script><!--
-#Const C_PageUID "SdHelper"
 #Include "MathLib" as ML
 #Include "TextLib" as TL
+
+#Const C_PageUID "SdHelper"
+
 
 // logging function, should be "MLHook_LogMe_" + PageUID
 Void MLHookLog(Text msg) {
@@ -31,6 +44,9 @@ Void GetPlayer() {
 
 declare CMlLabel MainLabel;
 declare CMlLabel IndicatorLabel;
+declare CMlQuad QBar;
+declare CMlQuad QMid;
+declare CMlQuad QQuality;
 
 Void EnsureMainLabel() {
     if (MainLabel == Null) {
@@ -39,6 +55,20 @@ Void EnsureMainLabel() {
     if (IndicatorLabel == Null) {
         IndicatorLabel <=> Page.GetFirstChild("sd-pct-rating") as CMlLabel;
     }
+    if (QBar == Null) {
+        QBar <=> Page.GetFirstChild("sd-slider-bar") as CMlQuad;
+    }
+    if (QMid == Null) {
+        QMid <=> Page.GetFirstChild("sd-slider-mid") as CMlQuad;
+    }
+    if (QQuality == Null) {
+        QQuality <=> Page.GetFirstChild("sd-slider-quality") as CMlQuad;
+    }
+}
+
+Void SetPos(CMlQuad quad, Vec2 pos) {
+    quad.RelativePosition.X = pos.X;
+    quad.RelativePosition.Y = pos.Y;
 }
 
 
@@ -107,6 +137,43 @@ Real GetSpeedSlideScorePct(Real SideSpeed) {
     return GetPct(lower.Y) * (1. - pos) + GetPct(upper.Y) * pos;
 }
 
+// ideal sidespeed: 5.5
+// clamp 0 to 12.5
+// so x position of marker is at (5.5/12.5 = 0.44) * length
+// LRSide: -1. or 1.
+Void SetSlider(Boolean Visible, Real LeftRightSide, Real SideSpeed, Vec3 Color) {
+    if (Visible) {
+        QBar.Show();
+        QMid.Show();
+        QQuality.Show();
+        IndicatorLabel.Show();
+
+        declare Vec2 Pos = <-35., -45.>;
+        Pos.X = Pos.X * LeftRightSide;
+
+        declare Width = 42.32;
+        declare QualityPos = Pos;
+        declare MidPos = Pos;
+
+        MidPos.X = MidPos.X - ((5.5 / 12.5 - .5) * Width * LeftRightSide);
+        QualityPos.X = QualityPos.X - ((ML::Abs(SideSpeed) / 12.5 - .5) * Width * LeftRightSide);
+
+        SetPos(QBar, Pos);
+        SetPos(QMid, MidPos);
+        SetPos(QQuality, QualityPos);
+
+        QQuality.Colorize = Color;
+
+        IndicatorLabel.RelativePosition.X = Pos.X;
+        IndicatorLabel.RelativePosition.Y = Pos.Y - 7.5;
+    } else {
+        QBar.Hide();
+        QMid.Hide();
+        QQuality.Hide();
+        IndicatorLabel.Hide();
+    }
+}
+
 
 Void RunUpdateSDs() {
     GetPlayer();
@@ -132,19 +199,24 @@ Void RunUpdateSDs() {
         SADegrees = ML::RadToDeg(SlipAngle);
     }
 
-    if (ML::Abs(SADegrees) < 0.65) {
+    if (ML::Abs(SADegrees) < 0.35) {
         SADegrees = 0.;
         SlipAngle = 0.;
     }
 
-    declare SideSpeed = ML::Abs(sped * ML::Sin(SlipAngle));
+    declare SideSpeedRaw = sped * ML::Sin(SlipAngle);
+    declare SideSpeed = ML::Abs(SideSpeedRaw);
     declare SlidePct = GetSpeedSlideScorePct(SideSpeed);
     declare IndicatorColor = GetSlideMsgColor(SideSpeed);
     declare ColorTxt = "$s$" ^ TL::ColorToText(IndicatorColor);
 
+    declare LR = 1.;
+    if (SideSpeedRaw < 0.) LR = -1.;
+
     // need to get velocity vector and orientation vector
 
     EnsureMainLabel();
+    SetSlider(SlidePct > 0., LR, SideSpeed, IndicatorColor);
     if (SADegrees == 0) {
         MainLabel.Value = "No Slide";
     } else {
@@ -171,10 +243,14 @@ Void InitValues() {
 
 
 main() {
+    yield;
+    yield;
+    yield;
+    yield;
+    yield;
     InitValues();
     GetPlayer();
-    MainLabel <=> Page.GetFirstChild("sdhelper-label") as CMlLabel;
-    RunUpdateSDs();
+    // MainLabel <=> Page.GetFirstChild("sdhelper-label") as CMlLabel;
     while (True) {
         yield;
         RunUpdateSDs();

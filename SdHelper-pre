@@ -1,6 +1,17 @@
 <manialink name="SdHelper" version="3">
 
-<label id="sdhelper-label" pos="155 85" hidden="false" z-index="3" textsize="5" halign="right" textcolor="FFF" text="$sSd Helper"/>
-<label id="sd-pct-rating" pos="-35 -55" hidden="false" z-index="4" textsize="5" halign="center" textcolor="FFF" text="$sSd Quality"/>
+<label id="sdhelper-label" pos="155 85" hidden="false" z-index="3" textsize="5" halign="right" textcolor="FFF" text="$sSd Helper" />
+<label id="sd-pct-rating" pos="-35 -55" hidden="false" z-index="4" textsize="5" halign="center" textcolor="FFF" text="$sSd Quality" />
+
+<!--
+    https://raw.githubusercontent.com/XertroV/tm-in-map-sd-helper/master/
+
+    bar: 512x30 -> 42.32 x 2.48
+
+    scale: 0.0827
+  -->
+<quad id="sd-slider-bar" pos="-35 -45" size="42.32 2.48" halign="center" valign="center" hidden="true" z-index="5" image="https://xertrov.github.io/tm-in-map-sd-helper/bar.png"/>
+<quad id="sd-slider-mid" pos="-35 -45" size="2.48 9.92" halign="center" valign="center" hidden="true" z-index="4" image="https://xertrov.github.io/tm-in-map-sd-helper/mid.png"/>
+<quad id="sd-slider-quality" pos="-35 -45" size="4.92 8.27" halign="center" valign="center" hidden="true" z-index="6" image="https://xertrov.github.io/tm-in-map-sd-helper/quality.png"/>
 
 <script><!--
