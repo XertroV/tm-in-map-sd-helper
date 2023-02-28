@@ -1,6 +1,6 @@
 <manialink name="SdHelper" version="3">
 
-<label id="sdhelper-label" pos="155 85" hidden="false" z-index="3" textsize="2" halign="right" textcolor="FFF" text="$sSd Helper" />
+<label id="sdhelper-label" pos="155 85" hidden="false" z-index="3" textsize="5" halign="right" textcolor="FFF" text="$sSd Helper" />
 <label id="sd-pct-rating" pos="-35 -55" hidden="false" z-index="4" textsize="5" halign="center" textcolor="FFF" text="$sSd Quality" />
 
 <!--
@@ -32,6 +32,10 @@ declare Vec2[] TarmacFsArr;
 declare CSmPlayer ThePlayer;
 
 Void GetPlayer() {
+    if (GUIPlayer != Null) {
+        ThePlayer <=> GUIPlayer;
+        return;
+    }
     foreach (Player in Players) {
         if (Player.User.Name == LocalUser.Name) {
             ThePlayer <=> Player;
@@ -86,6 +90,27 @@ Vec3 GetColor(Real idx) {
     return <1., 1., 1.>;
 }
 
+
+declare Real AverageSlideQuality;
+declare Real NbSlideQualitySamples;
+
+Void AddSlideQualityToAverage(Real SQ) {
+    AverageSlideQuality = AverageSlideQuality * NbSlideQualitySamples + SQ;
+    NbSlideQualitySamples += 1.;
+    AverageSlideQuality = AverageSlideQuality / NbSlideQualitySamples;
+}
+
+Vec3 GetSlideAvgColor() {
+    if (AverageSlideQuality == 0.) {
+        return <1., 1., 1.>;
+    }
+    declare Ix = (1. - AverageSlideQuality) * 3.;
+    declare Real lower = ML::NearestReal(ML::FloorInteger(Ix));
+    declare Real upper = ML::NearestReal(ML::CeilingInteger(Ix));
+    declare pos = Ix - lower;
+    // declare Real pos = InvLerp(lower.X, upper.X, );
+    return GetColor(lower) * (1. - pos) + GetColor(upper) * pos;
+}
 
 Vec3 GetSlideMsgColor(Real SideSpeed) {
     declare Vec2 lower = <0., -1.>;
@@ -199,6 +224,12 @@ Void UpdateTarmacIdealSpeeds(Real sped) {
 
 Void RunUpdateSDs() {
     GetPlayer();
+
+    if (ThePlayer == Null) {
+        SetSlider(False, 1., 0., <1., 1., 1.>, 0.);
+        return;
+    }
+
     // ThePlayer.Position;
     // ThePlayer.AimYaw;
     // ThePlayer.AimPitch;
@@ -239,7 +270,10 @@ Void RunUpdateSDs() {
     // need to get velocity vector and orientation vector
 
     EnsureMainLabel();
-    declare ShouldDraw = SlidePct > 0. && sped >= 400./3.6;
+    declare ShouldDraw = SlidePct > 0. && sped >= 400./3.6 && ThePlayer.WheelsSkiddingCount > 3;
+    if (ShouldDraw) {
+        AddSlideQualityToAverage(SlidePct);
+    }
     SetSlider(ShouldDraw, LR, SideSpeed, IndicatorColor, sped);
     if (SADegrees == 0) {
         MainLabel.Value = "No Slide";
@@ -247,7 +281,7 @@ Void RunUpdateSDs() {
         MainLabel.Value = ColorTxt ^ SlidePct;
     }
 
-    MainLabel.Value = MainLabel.Value ^ "\n" ^ SideSpeed;
+    MainLabel.Value = "$s$" ^ TL::ColorToText(GetSlideAvgColor()) ^ "Average: " ^ TL::FormatReal(AverageSlideQuality * 10., 1, True, False);
     IndicatorLabel.Value = ColorTxt ^ TL::FormatReal(SlidePct * 10., 1, True, False);
 }
 
@@ -267,10 +301,6 @@ Void InitValues() {
 
 
 main() {
-    yield;
-    yield;
-    yield;
-    yield;
     yield;
     InitValues();
     GetPlayer();
