@@ -59,6 +59,10 @@ Real InvLerp(Real a, Real b, Real v) {
     return (v - a) / (b - a);
 }
 
+Real Lerp(Real a, Real b, Real t) {
+    return (b - a) * t + a;
+}
+
 Vec3 GetColor(Real idx) {
     if (idx <= 0.) return <0., 1., 0.>;
     if (idx == 1.) return <0.4, 0.4, 1.>;
@@ -120,11 +124,19 @@ Real GetSpeedSlideScorePct(Real SideSpeed) {
     return GetPct(lower.Y) * (1. - pos) + GetPct(upper.Y) * pos;
 }
 
+Real GetExtraMaxSideSpeedForSlide(Real Speed) {
+    return Lerp(0., 27.5 - 12.5, InvLerp(111., 278., Speed));
+}
+
+Real GetMaxSideSpeedForSlide(Real Speed) {
+    return 12.5 + GetExtraMaxSideSpeedForSlide(Speed);
+}
+
 // ideal sidespeed: 5.5
 // clamp 0 to 12.5
 // so x position of marker is at (5.5/12.5 = 0.44) * length
 // LRSide: -1. or 1.
-Void SetSlider(Boolean Visible, Real LeftRightSide, Real SideSpeed, Vec3 Color) {
+Void SetSlider(Boolean Visible, Real LeftRightSide, Real SideSpeed, Vec3 Color, Real sped) {
     if (Visible) {
         QBar.Show();
         QMid.Show();
@@ -137,9 +149,10 @@ Void SetSlider(Boolean Visible, Real LeftRightSide, Real SideSpeed, Vec3 Color) 
         declare Width = 42.32;
         declare QualityPos = Pos;
         declare MidPos = Pos;
+        declare MaxSideSpeed = GetMaxSideSpeedForSlide(sped);
 
-        MidPos.X = MidPos.X - ((5.5 / 12.5 - .5) * Width * LeftRightSide);
-        QualityPos.X = QualityPos.X - ((ML::Abs(SideSpeed) / 12.5 - .5) * Width * LeftRightSide);
+        MidPos.X = MidPos.X - ((5.5 / MaxSideSpeed - .5) * Width * LeftRightSide);
+        QualityPos.X = QualityPos.X - ((ML::Abs(SideSpeed) / MaxSideSpeed - .5) * Width * LeftRightSide);
 
         SetPos(QBar, Pos);
         SetPos(QMid, MidPos);
@@ -155,6 +168,16 @@ Void SetSlider(Boolean Visible, Real LeftRightSide, Real SideSpeed, Vec3 Color) 
         QQuality.Hide();
         IndicatorLabel.Hide();
     }
+}
+
+
+Void UpdateTarmacIdealSpeeds(Real sped) {
+    if (sped < 111.) return;
+    // 3, 4, 5
+    declare MaxSideSpeed = GetMaxSideSpeedForSlide(sped);
+    TarmacFsArr[3].X = 6.5 / 12.5 * MaxSideSpeed;
+    TarmacFsArr[4].X = 8.9 / 12.5 * MaxSideSpeed;
+    TarmacFsArr[5].X = MaxSideSpeed;
 }
 
 
@@ -187,6 +210,7 @@ Void RunUpdateSDs() {
         SlipAngle = 0.;
     }
 
+    UpdateTarmacIdealSpeeds(sped);
     declare SideSpeedRaw = sped * ML::Sin(SlipAngle);
     declare SideSpeed = ML::Abs(SideSpeedRaw);
     declare SlidePct = GetSpeedSlideScorePct(SideSpeed);
@@ -199,7 +223,8 @@ Void RunUpdateSDs() {
     // need to get velocity vector and orientation vector
 
     EnsureMainLabel();
-    SetSlider(SlidePct > 0., LR, SideSpeed, IndicatorColor);
+    declare ShouldDraw = SlidePct > 0. && sped >= 400./3.6;
+    SetSlider(ShouldDraw, LR, SideSpeed, IndicatorColor, sped);
     if (SADegrees == 0) {
         MainLabel.Value = "No Slide";
     } else {
