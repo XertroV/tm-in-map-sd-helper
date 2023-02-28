@@ -254,7 +254,10 @@ Void RunUpdateSDs() {
     // need to get velocity vector and orientation vector
 
     EnsureMainLabel();
-    declare ShouldDraw = SlidePct > 0. && sped >= 400./3.6 && ThePlayer.WheelsSkiddingCount > 3;
+    /* this does not work on a server:
+    // && ThePlayer.WheelsSkiddingCount > 3;
+    */
+    declare ShouldDraw = SlidePct > 0. && sped >= 400./3.6;
     if (ShouldDraw) {
         AddSlideQualityToAverage(SlidePct);
     }
